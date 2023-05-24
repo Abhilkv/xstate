@@ -1,32 +1,37 @@
 import { createMachine } from 'xstate'
 
-export const MouseMachine = createMachine(
+export const LoadingMachine = createMachine(
   {
-    id: 'mouse',
-    initial: 'notHovered',
+    id: 'LoadingData',
+    initial: 'Loading',
     context: {
       count: 0
     },
+    schema: {
+      events: {} as { type: "DATA_LOADED" } | { type: "LOADING_FAILED" } | { type: "LOADING_FAILED" }
+    },
     states: {
-      notHovered: {
+      Loading: {
         on: {
-          MOUSEOVER: {
-            target: 'hovered'    // change state to hovered
+          DATA_LOADED: {
+            target: 'Loaded'
           },
-          INCREMENT: {
-            actions: 'incrementCount'   // call action increment
+          LOADING_FAILED: {
+            target: 'LoadingFailed'
           },
-          DECREMENT: {
-            actions: 'decrementCount'
+        }
+      },
+      Loaded: {
+        on: {
+          LOADING_FAILED: {
+            target: 'LoadingFailed'
           }
         }
       },
-      hovered: {
-        // The 'beeping' and alertData activity will take place as long as the machine is in the 'hovered' state
-        activities: ['beeping'],
+      LoadingFailed: {
         on: {
-          MOUSEOUT: {
-            target: 'notHovered'
+          DATA_LOADED: {
+            target: 'Loaded'
           }
         }
       }
