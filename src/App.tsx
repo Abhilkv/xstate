@@ -8,18 +8,34 @@ import React from 'react';
 
 const App = () => {
   const [state, MouseSend] = useMachine(MouseMachine);
-  const [LoadingState, LoadingSend] = useMachine(LoadingMachine);
+  const [LoadingState, LoadingSend] = useMachine(LoadingMachine, {
+    services: {
+      loadinfDataService: async () => {
+        // return ["Data"]
+        return await fetchData2();
+      }
+    }
+  });
 
   useEffect(() => {
     fetch('https://jsonplaceholder.typicode.com/todos/1')
       .then(response => response.json())
-      .then(json => LoadingSend(json));
-
+      .then(json => { console.log('data1'); LoadingSend({ type: "DATA_LOADED",  data: json})}).catch(() => {
+        LoadingSend({ type: "LOADING_FAILED", data: 'Data Loading failed ' });
+      })
   }, []);
+
+  const fetchData2 = async () => {
+    return await fetch('https://jsonplaceholder.typicode.com/todos/2')
+    .then(response => response.json())
+    .then(json => {  console.log('data2'); return json}).catch((err) => err)
+  }
 
   return (
     <div className='App'>
       <div className='App-header'>
+        <span>{JSON.stringify(LoadingState.context.data)} 1</span>
+        <span>{JSON.stringify(LoadingState.context.data2)} data2</span>
         <div>
           <div style={{ border: '1px solid red', padding: '10px' }}>
             <button
