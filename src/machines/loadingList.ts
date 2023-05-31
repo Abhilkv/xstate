@@ -1,4 +1,4 @@
-import { createMachine } from 'xstate'
+import { createMachine, assign } from 'xstate'
 
 export const LoadingMachine = createMachine(
   {
@@ -48,7 +48,7 @@ export const LoadingMachine = createMachine(
           }
         },
         invoke: {                   // defining services to do asynchronous operation
-          src: "loadinfDataService",
+          src: "loadinfDataService", // this name should be the same name specified in the services object on useMachine Hook
           onDone: {
             target: "Loaded",
             actions: "storeDetails"
@@ -78,15 +78,22 @@ export const LoadingMachine = createMachine(
       },
       storeData1: (context, event) => {
         console.log(event?.data, "action1")
-        context.data = { ...event?.data};
+        context.data = { ...event?.data};    // one methode of storing to context => direct assignment of value to variable 
       },
-      storeDetails: (context, event) => {
-        console.log(event?.data, 'action2')
-        context.data2 = { ...event?.data};
-        // return {
-        //   errorMessage: (event.data as Error).message,
-        // };
-      }
+      // storeDetails: (context, event) => {
+      //   console.log(event?.data, 'action2')
+      //    context.data2 = { ...event?.data};
+      // }
+      storeDetails: assign((context, event) => {   // another  methode of storing to context, uses assign methode to store data 
+        return { ...context,
+          data2: event.data,
+        };
+      })
+    },
+    services: {
+      // loadinfDataService: async (context, event) => {
+      //   return await fetchData2(context.count + 1);
+      // },
     },
     activities: {
       beeping: () => {

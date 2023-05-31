@@ -3,14 +3,16 @@ import { useEffect } from 'react';
 import { useMachine } from '@xstate/react';
 import { MouseMachine } from './machines/hover';
 import { LoadingMachine } from './machines/loadingList';
+import { infiniteScrollMachine } from './machines/infinite';
 import './App.css';
 import React from 'react';
 
 const App = () => {
   const [state, MouseSend] = useMachine(MouseMachine);
+  const [current, send] = useMachine(infiniteScrollMachine);
   const [LoadingState, LoadingSend] = useMachine(LoadingMachine, {
     services: {
-      loadinfDataService: async () => {
+      loadinfDataService: async (context, event) => {
         // return ["Data"]
         return await fetchData2();
       }
@@ -25,11 +27,14 @@ const App = () => {
       })
   }, []);
 
-  const fetchData2 = async () => {
-    return await fetch('https://jsonplaceholder.typicode.com/todos/2')
+  const fetchData2 = () => {
+    return fetch(`https://jsonplaceholder.typicode.com/todos/${state.context.count + 1}`)
     .then(response => response.json())
     .then(json => {  console.log('data2'); return json}).catch((err) => err)
   }
+  const handleFetch = () => {
+    send('FETCH');
+  };
 
   return (
     <div className='App'>
@@ -56,10 +61,11 @@ const App = () => {
           </div>
         </div>
         <div style={{ border: '1px solid green', margin: '5px', padding: '10px'}}>
-          <h1>{JSON.stringify(state.value)}</h1>
+          <h1>{JSON.stringify(state.value)}  Main State</h1>
+          <h1>{JSON.stringify(MouseMachine.transition('notHovered', { type: 'MOUSEOVER' }).value)}  Sub state under Hover State</h1>
           <button
             onMouseEnter={() => {
-              MouseSend('MOUSEOVER');
+              MouseSend({ type: 'MOUSEOVER', data: 'Sample data'});
             }}
             onMouseLeave={() => {
               MouseSend({ type: 'MOUSEOUT' });
@@ -67,6 +73,16 @@ const App = () => {
           >
             OVER Mouse
           </button>
+        </div>
+        <div style={{ border: '1px solid yellow', margin: '5px', padding: '10px'}}>
+        <div>
+          <ul>
+            {current.context?.items?.map((item: {}, index: number) => (
+              <li key={index}>{JSON.stringify(item)}</li>
+            ))}
+          </ul>
+          <button onClick={handleFetch}>Load More</button>
+        </div>
         </div>
       </div>
     </div>
